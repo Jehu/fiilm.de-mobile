@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>fiilm.de mobile application</title>
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+
+        <script type="text/javascript" charset="utf-8" src="./js/i18n/de_DE.js"></script>
+        <script type="text/javascript" charset="utf-8" src="./lib/sprintf.js"></script>
+        <script type="text/javascript" charset="utf-8" src="./lib/underscore.js"></script>
+        <script type="text/javascript" charset="utf-8" src="./lib/angular.min.js"></script>
+        <script type="text/javascript" charset="utf-8" src="./lib/jehu-Angular-Addons/filter.i18n.js"></script>
+        <script type="text/javascript" charset="utf-8" src="./lib/jehu-Angular-Addons/filter.nl2br.js"></script>
+        <script type="text/javascript" charset="utf-8" src="./js/module.js"></script>
+        <script type="text/javascript" charset="utf-8" src="./app.js"></script>
+        <script type="text/javascript" charset="utf-8" src="./lib/jQ.Mobi/jq.mobi.min.js"></script>
+        <script type="text/javascript" charset="utf-8" src="./lib/jQ.Mobi/ui/jq.ui.min.js"></script>
+        <link href="./css/icons.css" rel="stylesheet" type="text/css" />
+        <link href="./css/jq.ui.css" rel="stylesheet" type="text/css" />
+        <link href="./css/local.css" rel="stylesheet" type="text/css" />
+        <script type="text/javascript">
+            <!-- // include touch.js on desktop browsers only -->
+            if(!((window.DocumentTouch && document instanceof DocumentTouch)||'ontouchstart' in window)){
+                var script = document.createElement("script");
+                script.src = "./lib/jQ.Mobi/touch.js";
+                var tag = $("head").append(script);
+                $.os.android = true; //let's make it run like an android device
+                $.os.desktop = true;
+            }
+
+            /* This function runs once the page is loaded, but appMobi is not yet active */
+            var webRoot="./";
+            $.ui.backButtonText="Back";
+            $.ui.loadDefaultHash=true;
+
+            /* This code prevents users from dragging the page */
+            var preventDefaultScroll = function(event) {
+                event.preventDefault();
+                window.scroll(0,0);
+                return false;
+            };
+
+            document.addEventListener('touchmove', preventDefaultScroll, false);
+
+            /* This code is used to run as soon as appMobi activates */
+            var onDeviceReady=function(){
+                AppMobi.device.setRotateOrientation("portrait");
+                AppMobi.device.setAutoRotate(false);
+                webRoot=AppMobi.webRoot+"/";
+                //hide splash screen
+                //AppMobi.device.hideSplashScreen();
+            };
+            document.addEventListener("appMobi.device.ready",onDeviceReady,false);
+        </script>
+
+    </head>
+    <body>
+        <div id="jQUi" ng-app="movieDb" ng-controller="MainCntl">
+            <div id="header">
+            </div>
+            <!-- // -->
+            <div id="content">
+
+                <div title="{{'movies.list'|t}}" class="panel" data-tab="nav-home" selected="true" id="start" data-footer="footer" ng-controller="MoviesListCntl">
+                    <form>
+                        <input type="text" class="jq-ui-forms" placeholder="{{'placeholder.search'|t}}"  ng-model="searchTerm" />
+                    </form>
+                    <ul>
+                        <li ng-repeat="movie in movies | filter:searchTerm">
+                            <div onclick="$.ui.loadContent('movie-details')" ng-click="setCurrentMovie(movie.node)">
+                                <span class="title">{{movie.node.title}}
+                                </span>
+                                <span class="info">[ {{movie.node.field_genre}} ]</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div title="{{'movie.details'|t}}" class="panel" id="movie-details" data-footer="footer" ng-controller="MovieDetailsCntl">
+                        <img ng-show="currentMovie.field_image" ng-src="{{currentMovie.field_image}}" height="100px" />
+                        <div class="structure">
+                            <label>{{'lbl.title'|t}}</label>
+                            <div ng-bind="currentMovie.title"></div>
+                            <label>{{'lbl.medium'|t}}</label>
+                            <div ng-bind="currentMovie.format"></div>
+                            <label>{{'lbl.ident'|t}}</label>
+                            <div ng-bind="currentMovie.field_ident"></div>
+                            <label>{{'lbl.genre'|t}}</label>
+                            <div ng-bind="currentMovie.field_genre"></div>
+                        </div>
+                </div>
+
+                <div title="{{'movie.add'|t}}" class="panel" id="movie-add" data-tab="nav-add" data-footer="footer" ng-controller="AddMovieCntl">
+                </div>
+
+                <div title="{{'login'|t}}" class="panel" id="login" data-tab="nav-settings" data-footer="footer" ng-controller="LoginCntl">
+                    <form>
+                        <fieldset>
+                            <legend>{{'lgnd.loginform'|t}}</legend>
+                            <input type="text" ng-model="username" class="jq-ui-forms" placeholder="{{'placeholder.username'|t}}" />
+                            <input type="password" ng-model="password" class="jq-ui-forms" placeholder="{{'placeholder.password'|t}}" /><br />
+                            <button ng-click="login()" class="button">{{'btn.login'|t}}</button>
+                        </fieldset>
+                    </form>
+                </div>
+
+                <div title="{{'settings'|t}}" class="panel" id="dashboard" data-tab="nav-settings" data-footer="footer" ng-controller="DashboardCntl">
+                    <form>
+                        <fieldset>
+                            <legend>{{'lgnd.loginbtn'|t}}</legend>
+                            <a href="#login" class="button" id="btn-login" ng-show="showLoginBtn">{{'btn.login'|t}}</a>
+                            <button class="button" id="btn-logout" ng-hide="showLoginBtn" ng-click="logout()">{{'btn.logout'|t}}</button>
+                        </fieldset>
+                    </form>
+                </div>
+
+                <!--
+                  // DIALOG: already logged in
+                -->
+                <div data-modal="true" class="panel" id="dialog-already-logged-in">
+                    <p>{{'msg.alreadyLoggedIn'|t}}</p>
+                </div>
+
+                <div data-modal="true" class="panel" id="dialog-authentication-error">
+                    <p>{{'msg.authenticationError'|t}}</p>
+                </div>
+
+            </div>
+            <!-- // -->
+            <footer id="footer">
+                <div class="horzRule"></div>
+                <a href="#start" id="nav-home" class="icon home">{{'btn.home'|t}}</a>
+                <!--a href="#movie-add" id="nav-add" class="icon add">{{'btn.addMovie'|t}}</a-->
+                <a href="#dashboard" id="nav-settings" class="icon settings">{{'btn.dashboard'|t}}</a>
+            </footer>
+        </div>
+    </body>
+</html>
